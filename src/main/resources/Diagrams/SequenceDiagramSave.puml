@@ -1,0 +1,78 @@
+@startuml
+skinparam maxMessageSize 150
+skinparam sequenceMessageAlign center
+skinparam roundcorner 10
+
+actor Utilisateur as U
+
+participant "pv:PerspectiveView" as PV
+participant "mc:MouseController" as MC
+participant "inv:Invoker" as I
+
+' On ne déclare pas SaveCommand ici pour qu'il apparaisse à l'instanciation
+
+participant "im:ImageModel" as IM
+participant "p:Perspective" as P
+
+U -> PV : clickSauvegarder()
+activate PV
+
+PV -> MC : gererSauvegarde()
+activate MC
+
+' Création de l'objet au moment exact de l'instanciation
+create participant "cmd:SaveCommand" as SC
+MC -> SC : <<create>> SaveCommand(im, p)
+activate SC
+SC --> MC : cmd
+deactivate SC
+
+' Appel au Singleton
+MC -> I : getInstance()
+activate I
+I --> MC : inv
+deactivate I
+
+' Exécution via l'Invoker
+MC -> I : executeCommand(cmd)
+activate I
+
+I -> SC : execute()
+activate SC
+
+' La commande récupère l'état du modèle
+SC -> IM : getImagePath()
+activate IM
+IM --> SC : imagePath
+deactivate IM
+
+SC -> P : getZoom()
+activate P
+P --> SC : zoom
+deactivate P
+
+SC -> P : getTransX()
+activate P
+P --> SC : transX
+deactivate P
+
+SC -> P : getTransY()
+activate P
+P --> SC : transY
+deactivate P
+
+note right of SC : Sérialisation et écriture\ndes données sur le disque
+
+SC --> I
+deactivate SC
+
+I --> MC
+deactivate I
+
+MC --> PV
+deactivate MC
+
+PV --> U
+deactivate PV
+
+@enduml

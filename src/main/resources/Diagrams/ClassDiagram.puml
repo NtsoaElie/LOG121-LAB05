@@ -1,0 +1,141 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam nodesep 50
+skinparam ranksep 60
+skinparam defaultFontName Arial
+skinparam shadowing false
+
+skinparam class {
+    BorderColor #555555
+    ArrowColor #555555
+    BackgroundColor #FAFAFA
+}
+
+skinparam package {
+    BorderColor #555555
+    FontStyle bold
+}
+
+' ── COLOR STEREOTYPES ──────────────────────────────────────
+skinparam class {
+    BackgroundColor<<interface>> #E1F5EE
+    BorderColor<<interface>>     #1D9E75
+    FontColor<<interface>>       #0F6E56
+
+    BackgroundColor<<model>>     #EAF3DE
+    BorderColor<<model>>         #639922
+    FontColor<<model>>           #3B6D11
+
+    BackgroundColor<<view>>      #E6F1FB
+    BorderColor<<view>>          #378ADD
+    FontColor<<view>>            #185FA5
+
+    BackgroundColor<<controller>> #FAEEDA
+    BorderColor<<controller>>     #BA7517
+    FontColor<<controller>>       #854F0B
+
+    BackgroundColor<<command>>   #FAECE7
+    BorderColor<<command>>       #D85A30
+    FontColor<<command>>         #993C1D
+}
+
+' ══════════════════════════════════════════════════════════
+package "Model" #E8F8F3 {
+
+    interface Observable <<interface>> {
+        + addObserver(o: Observer)
+        + notifyObservers()
+    }
+
+    interface Observer <<interface>> {
+        + update()
+    }
+
+    class ImageModel <<model>> {
+    }
+
+    class Perspective <<model>> {
+        + translater(dx, dy)
+        + zoomer(facteur)
+    }
+
+    ImageModel  .up.|> Observable
+    Perspective .up.|> Observable
+}
+
+' ══════════════════════════════════════════════════════════
+package "View" #EAF4FD {
+
+    class ThumbnailView <<view>> {
+        + update()
+    }
+
+    class PerspectiveView <<view>> {
+        + update()
+    }
+
+    class MainFrame <<view>> {
+    }
+
+    ThumbnailView  .up.|> Observer
+    PerspectiveView .up.|> Observer
+
+    MainFrame *-- ThumbnailView
+    MainFrame *-- PerspectiveView
+}
+
+' ══════════════════════════════════════════════════════════
+package "Controller" #FEF6E4 {
+
+    class MouseController <<controller>> {
+    }
+
+    class Invoker <<controller>> {
+        {static} + getInstance() : Invoker
+        + executeCommand(c: Command)
+        + undo()
+    }
+    note right of Invoker : «Singleton»
+
+    interface Command <<interface>> {
+        + execute()
+        + undo()
+    }
+
+    class TranslateCommand <<command>> {
+    }
+
+    class SaveCommand <<command>> {
+    }
+
+    class ZoomCommand <<command>> {
+    }
+
+    MouseController --> Invoker        : "envoie >"
+    Invoker         o--> "*" Command   : "historique >"
+
+    TranslateCommand .up.|> Command
+    SaveCommand      .up.|> Command
+    ZoomCommand      .up.|> Command
+}
+
+' ══════════════════════════════════════════════════════════
+' Cross-package relationships
+' ══════════════════════════════════════════════════════════
+
+' View → Model (observe)
+ThumbnailView  --> ImageModel  : "observe >"
+PerspectiveView --> Perspective : "observe >"
+
+' View → Controller (délègue)
+PerspectiveView --> MouseController : "délègue >"
+
+' Commands → Model (modifie / sauvegarde)
+TranslateCommand --> Perspective  : "modifie >"
+ZoomCommand      --> Perspective  : "modifie >"
+SaveCommand      --> ImageModel   : "sauvegarde >"
+SaveCommand      --> Perspective  : "sauvegarde >"
+
+@enduml

@@ -1,0 +1,73 @@
+@startuml
+skinparam maxMessageSize 150
+skinparam sequenceMessageAlign center
+skinparam roundcorner 10
+
+actor Utilisateur as U
+
+participant "mf:MainFrame" as MF
+participant "mc:MouseController" as MC
+participant "inv:Invoker" as I
+participant "cmd:ZoomCommand" as ZC
+participant "p:Perspective" as P
+participant "pv:PerspectiveView" as PV
+
+note over ZC : L'objet cmd:ZoomCommand existe déjà.\nIl a été conservé dans l'historique de l'Invoker.
+
+U -> MF : actionAnnuler()\n(ex: Raccourci ou clic)
+activate MF
+
+MF -> MC : gererAnnulation()
+activate MC
+
+' Récupération du Singleton
+MC -> I : getInstance()
+activate I
+I --> MC : inv
+deactivate I
+
+' Le contrôleur demande à l'Invoker d'annuler
+MC -> I : undo()
+activate I
+
+note right of I : L'Invoker dépile la dernière\ncommande de son historique
+I -> ZC : undo()
+activate ZC
+
+' La commande restaure l'ancien état dans le modèle
+ZC -> P : zoomer(ancienFacteur)
+activate P
+
+' --- DÉCLENCHEMENT DU PATRON OBSERVATEUR ---
+note right of P : Le modèle est modifié.\nIl déclenche la mise à jour MVC.
+P -> P : notifyObservers()
+activate P
+
+P -> PV : update()
+activate PV
+
+' La vue interroge le modèle pour se dessiner
+PV -> P : getZoom()
+P --> PV : facteur
+note right of PV : La vue se redessine avec\nl'ancien facteur de zoom
+PV -> PV : repaint()
+deactivate PV
+
+deactivate P
+
+P --> ZC
+deactivate P
+
+ZC --> I
+deactivate ZC
+
+I --> MC
+deactivate I
+
+MC --> MF
+deactivate MC
+
+MF --> U
+deactivate MF
+
+@enduml
