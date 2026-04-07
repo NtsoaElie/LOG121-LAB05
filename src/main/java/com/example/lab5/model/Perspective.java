@@ -37,6 +37,13 @@ public class Perspective implements Observable, Serializable {
         observers.add(o);
     }
 
+    public void reset() {
+        this.zoom = 1.0;
+        this.transX = 0.0;
+        this.transY = 0.0;
+        notifyObservers();
+    }
+
     @Override
     public void notifyObservers() {
         if (observers != null) {

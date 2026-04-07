@@ -67,6 +67,8 @@ public class MainFrame extends Application {
             File file = fileChooser.showOpenDialog(primaryStage);
             if (file != null) {
                 imageModel.setImagePath(file.getAbsolutePath()); // Modifie le modèle, ce qui notifie les vues !
+                perspective1.reset();
+                perspective2.reset();
             }
         });
 
