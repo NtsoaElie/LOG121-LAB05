@@ -32,6 +32,10 @@ public class PerspectiveView extends Pane implements Observer {
         // Optionnel mais recommandé : empêche l'image de déborder visuellement de sa zone
         this.setStyle("-fx-border-color: black; -fx-background-color: lightgray;");
 
+        //window size
+        this.setPrefSize(400, 500);
+        this.setClip(new javafx.scene.shape.Rectangle(400, 500));
+
         initialiserEvenementsSouris();
     }
 
