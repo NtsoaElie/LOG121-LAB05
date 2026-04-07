@@ -9,6 +9,7 @@ import com.example.lab5.view.PerspectiveView;
 import com.example.lab5.view.ThumbnailView;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -18,18 +19,20 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 
 public class MainFrame extends Application {
 
     @Override
     public void start(Stage primaryStage) {
 
-        // --- 1. INSTANCIATION DU MODÈLE ---
+        // --- 1. INSTANCIATION DU MODELE ---
         ImageModel imageModel = new ImageModel();
         Perspective perspective1 = new Perspective();
-        Perspective perspective2 = new Perspective(); // L'énoncé demande une 2e et 3e vue [cite: 140]
+        Perspective perspective2 = new Perspective(); // L'enonce demande une 2e et 3e vue [cite: 140]
 
-        // --- 2. INSTANCIATION DES CONTRÔLEURS ---
+        // --- 2. INSTANCIATION DES CONTROLEURS ---
         MouseController controleur1 = new MouseController(perspective1);
         MouseController controleur2 = new MouseController(perspective2);
 
@@ -39,7 +42,7 @@ public class MainFrame extends Application {
         PerspectiveView vuePerspective2 = new PerspectiveView(imageModel, perspective2, controleur2);
 
         // --- 4. CONNEXION DU PATRON OBSERVATEUR ---
-        // Les vues s'abonnent aux modèles pour être notifiées des changements
+        // Les vues s'abonnent aux modeles pour etre notifiees des changements
         imageModel.addObserver(thumbnailView);
         imageModel.addObserver(vuePerspective1);
         imageModel.addObserver(vuePerspective2);
@@ -47,26 +50,27 @@ public class MainFrame extends Application {
         perspective1.addObserver(vuePerspective1);
         perspective2.addObserver(vuePerspective2);
 
-        // --- 5. CRÉATION DU MENU ---
+        // --- 5. CREATION DU MENU ---
         MenuBar menuBar = new MenuBar();
         Menu menuFichier = new Menu("Fichier");
         MenuItem itemOuvrir = new MenuItem("Ouvrir une image...");
-        MenuItem itemSauvegarder = new MenuItem("Sauvegarder"); // Demandé par l'énoncé
+        MenuItem itemSauvegarder = new MenuItem("Sauvegarder"); // Demande par l'enonce
+        MenuItem itemLoader = new MenuItem("Charger une sauvegarde");
 
-        Menu menuEdition = new Menu("Édition");
-        MenuItem itemDefaire = new MenuItem("Défaire (Undo)");
+        Menu menuEdition = new Menu("Edition");
+        MenuItem itemDefaire = new MenuItem("Defaire (Undo)");
 
-        menuFichier.getItems().addAll(itemOuvrir, itemSauvegarder);
+        menuFichier.getItems().addAll(itemOuvrir, itemLoader, itemSauvegarder);
         menuEdition.getItems().add(itemDefaire);
         menuBar.getMenus().addAll(menuFichier, menuEdition);
 
-        // --- 6. ACTIONS DES MENUS (Le Contrôleur de Menu) ---
+        // --- 6. ACTIONS DES MENUS (Le Controleur de Menu) ---
         itemOuvrir.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg"));
             File file = fileChooser.showOpenDialog(primaryStage);
             if (file != null) {
-                imageModel.setImagePath(file.getAbsolutePath()); // Modifie le modèle, ce qui notifie les vues !
+                imageModel.setImagePath(file.getAbsolutePath()); // Modifie le modele, ce qui notifie les vues !
                 perspective1.reset();
                 perspective2.reset();
             }
@@ -75,15 +79,46 @@ public class MainFrame extends Application {
         itemSauvegarder.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier de sauvegarde", "*.ser"));
+            fileChooser.setInitialFileName("sauvegarde.ser");
+
             File file = fileChooser.showSaveDialog(primaryStage);
             if (file != null) {
-                SaveCommand saveCmd = new SaveCommand(imageModel, perspective1, perspective2, file);
+                File normalizedFile = ensureSerExtension(file);
+                SaveCommand saveCmd = new SaveCommand(imageModel, perspective1, perspective2, normalizedFile);
                 Invoker.getInstance().executeCommand(saveCmd);
             }
         });
 
-        itemDefaire.setOnAction(e -> {
-            Invoker.getInstance().undo(); // Fait appel au Singleton pour défaire la dernière action
+        itemDefaire.setOnAction(e -> Invoker.getInstance().undo()); // Fait appel au Singleton pour defaire la derniere action
+
+        itemLoader.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier de sauvegarde", "*.ser"));
+            File file = fileChooser.showOpenDialog(primaryStage);
+            if (file != null) {
+                try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                    ImageModel loadedModel = (ImageModel) ois.readObject();
+                    Perspective loadedP1 = (Perspective) ois.readObject();
+                    Perspective loadedP2 = (Perspective) ois.readObject();
+
+                    imageModel.setImagePath(loadedModel.getImagePath());
+
+                    perspective1.setZoom(loadedP1.getZoom());
+                    perspective1.setTransX(loadedP1.getTransX());
+                    perspective1.setTransY(loadedP1.getTransY());
+                    perspective1.notifyObservers();
+
+                    perspective2.setZoom(loadedP2.getZoom());
+                    perspective2.setTransX(loadedP2.getTransX());
+                    perspective2.setTransY(loadedP2.getTransY());
+                    perspective2.notifyObservers();
+
+                } catch (Exception ex) {
+                    showError("Chargement impossible",
+                            "Le fichier de sauvegarde est invalide ou incompatible.\n\n" +
+                                    "Details: " + ex.getClass().getSimpleName() + " - " + ex.getMessage());
+                }
+            }
         });
 
         // --- 7. ASSEMBLAGE DE L'INTERFACE (LAYOUT) ---
@@ -91,15 +126,30 @@ public class MainFrame extends Application {
         root.setTop(menuBar);
         root.setLeft(thumbnailView);
 
-        // On met les deux perspectives au centre, côte à côte
+        // On met les deux perspectives au centre, cote a cote
         HBox centreBox = new HBox(10, vuePerspective1, vuePerspective2);
         root.setCenter(centreBox);
 
-        // --- 8. AFFICHAGE DE LA FENÊTRE ---
+        // --- 8. AFFICHAGE DE LA FENETRE ---
         Scene scene = new Scene(root, 1000, 600);
-        primaryStage.setTitle("Laboratoire 5 - Éditeur d'images MVC");
+        primaryStage.setTitle("Laboratoire 5 - Editeur d'images MVC");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private File ensureSerExtension(File file) {
+        if (file.getName().toLowerCase().endsWith(".ser")) {
+            return file;
+        }
+        return new File(file.getParentFile(), file.getName() + ".ser");
+    }
+
+    private void showError(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Erreur");
+        alert.setHeaderText(title);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     public static void main(String[] args) {

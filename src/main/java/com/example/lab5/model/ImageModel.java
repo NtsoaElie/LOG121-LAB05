@@ -4,12 +4,14 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-// On implémente Serializable pour pouvoir sauvegarder l'état dans un fichier
+// On implemente Serializable pour pouvoir sauvegarder l'etat dans un fichier
 public class ImageModel implements Observable, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String imagePath;
 
-    // Le mot-clé "transient" est CRUCIAL ici. Il dit à Java:
+    // Le mot-cle "transient" est CRUCIAL ici. Il dit a Java:
     // "Ne sauvegarde pas les interfaces graphiques (observateurs) dans le fichier de sauvegarde !"
     private transient List<Observer> observers = new ArrayList<>();
 
@@ -19,12 +21,12 @@ public class ImageModel implements Observable, Serializable {
 
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
-        notifyObservers(); // Dès qu'on change l'image, on crie aux vues de se mettre à jour !
+        notifyObservers(); // Des qu'on change l'image, on crie aux vues de se mettre a jour !
     }
 
     @Override
     public void addObserver(Observer o) {
-        if (observers == null) observers = new ArrayList<>(); // Sécurité après un chargement
+        if (observers == null) observers = new ArrayList<>(); // Securite apres un chargement
         observers.add(o);
     }
 
