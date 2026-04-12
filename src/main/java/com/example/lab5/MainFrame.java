@@ -17,6 +17,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.scene.input.KeyCode;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -132,10 +133,16 @@ public class MainFrame extends Application {
 
         // --- 8. AFFICHAGE DE LA FENETRE ---
         Scene scene = new Scene(root, 1000, 600);
+        scene.setOnKeyPressed(e -> {
+            if (e.isControlDown() && e.getCode() == KeyCode.Z) {
+                Invoker.getInstance().undo();
+            }
+        });
         primaryStage.setTitle("Laboratoire 5 - Editeur d'images MVC");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
+
 
     private File ensureSerExtension(File file) {
         if (file.getName().toLowerCase().endsWith(".ser")) {

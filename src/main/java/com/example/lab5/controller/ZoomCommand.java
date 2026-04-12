@@ -22,8 +22,10 @@ public class ZoomCommand implements Command {
 
     @Override
     public void undo() {
+        perspective.setZoom(ancienZoom);
+        perspective.notifyObservers();
         // Pour annuler, on écrase le zoom actuel avec l'ancien zoom sauvegardé
         // (Il faut ajouter un setter dans Perspective pour ça, ou diviser par le facteur)
-        perspective.zoomer(1 / facteur); // L'inverse mathématique d'une multiplication
+        //perspective.zoomer(1 / facteur); // L'inverse mathématique d'une multiplication
     }
 }
