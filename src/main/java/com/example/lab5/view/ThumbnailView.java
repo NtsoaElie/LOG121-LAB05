@@ -17,7 +17,6 @@ public class ThumbnailView extends Pane implements Observer {
         this.imageModel = imageModel;
         this.imageView = new ImageView();
 
-        // On configure la taille de la vignette
         this.imageView.setFitWidth(200);
         this.imageView.setPreserveRatio(true);
 
