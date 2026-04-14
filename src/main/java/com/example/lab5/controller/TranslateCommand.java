@@ -21,7 +21,6 @@ public class TranslateCommand implements Command {
 
     @Override
     public void undo() {
-        // L'inverse d'une addition est une soustraction !
         perspective.translater(-dx, -dy);
     }
 }

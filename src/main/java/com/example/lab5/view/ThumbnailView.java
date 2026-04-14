@@ -26,7 +26,6 @@ public class ThumbnailView extends Pane implements Observer {
 
     @Override
     public void update() {
-        // Quand le modèle crie "J'ai changé !", la vue vient lire la nouvelle image
         if (imageModel.getImagePath() != null) {
             Image img = new Image(new File(imageModel.getImagePath()).toURI().toString());
             imageView.setImage(img);

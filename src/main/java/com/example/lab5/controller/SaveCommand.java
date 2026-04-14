@@ -14,7 +14,6 @@ public class SaveCommand implements Command {
     private Perspective perspective2;
     private File fichierDestination;
 
-    // Le constructeur prend tout ce qu'il faut sauvegarder
     public SaveCommand(ImageModel img, Perspective p1, Perspective p2, File fichier) {
         this.imageModel = img;
         this.perspective1 = p1;
@@ -25,7 +24,6 @@ public class SaveCommand implements Command {
     @Override
     public void execute() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fichierDestination))) {
-            // On écrit les objets un par un dans le fichier (Sérialisation)
             oos.writeObject(imageModel);
             oos.writeObject(perspective1);
             oos.writeObject(perspective2);
@@ -37,7 +35,6 @@ public class SaveCommand implements Command {
 
     @Override
     public void undo() {
-        // Une sauvegarde ne modifie pas l'état du programme, donc il n'y a rien à annuler !
         System.out.println("Impossible d'annuler une sauvegarde sur le disque.");
     }
 }

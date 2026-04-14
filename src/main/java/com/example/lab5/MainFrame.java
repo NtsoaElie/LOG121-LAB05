@@ -27,23 +27,17 @@ public class MainFrame extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-
-        // --- 1. INSTANCIATION DU MODELE ---
         ImageModel imageModel = new ImageModel();
         Perspective perspective1 = new Perspective();
-        Perspective perspective2 = new Perspective(); // L'enonce demande une 2e et 3e vue [cite: 140]
+        Perspective perspective2 = new Perspective();
 
-        // --- 2. INSTANCIATION DES CONTROLEURS ---
         MouseController controleur1 = new MouseController(perspective1);
         MouseController controleur2 = new MouseController(perspective2);
 
-        // --- 3. INSTANCIATION DE LA VUE ---
         ThumbnailView thumbnailView = new ThumbnailView(imageModel);
         PerspectiveView vuePerspective1 = new PerspectiveView(imageModel, perspective1, controleur1);
         PerspectiveView vuePerspective2 = new PerspectiveView(imageModel, perspective2, controleur2);
 
-        // --- 4. CONNEXION DU PATRON OBSERVATEUR ---
-        // Les vues s'abonnent aux modeles pour etre notifiees des changements
         imageModel.addObserver(thumbnailView);
         imageModel.addObserver(vuePerspective1);
         imageModel.addObserver(vuePerspective2);
@@ -51,11 +45,10 @@ public class MainFrame extends Application {
         perspective1.addObserver(vuePerspective1);
         perspective2.addObserver(vuePerspective2);
 
-        // --- 5. CREATION DU MENU ---
         MenuBar menuBar = new MenuBar();
         Menu menuFichier = new Menu("Fichier");
         MenuItem itemOuvrir = new MenuItem("Ouvrir une image...");
-        MenuItem itemSauvegarder = new MenuItem("Sauvegarder"); // Demande par l'enonce
+        MenuItem itemSauvegarder = new MenuItem("Sauvegarder");
         MenuItem itemLoader = new MenuItem("Charger une sauvegarde");
 
         Menu menuEdition = new Menu("Edition");
@@ -65,13 +58,12 @@ public class MainFrame extends Application {
         menuEdition.getItems().add(itemDefaire);
         menuBar.getMenus().addAll(menuFichier, menuEdition);
 
-        // --- 6. ACTIONS DES MENUS (Le Controleur de Menu) ---
         itemOuvrir.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg"));
             File file = fileChooser.showOpenDialog(primaryStage);
             if (file != null) {
-                imageModel.setImagePath(file.getAbsolutePath()); // Modifie le modele, ce qui notifie les vues !
+                imageModel.setImagePath(file.getAbsolutePath());
                 perspective1.reset();
                 perspective2.reset();
             }
@@ -80,7 +72,7 @@ public class MainFrame extends Application {
         itemSauvegarder.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier de sauvegarde", "*.ser"));
-            fileChooser.setInitialFileName("sauvegarde.ser");
+            fileChooser.setInitialFileName("sauvegarde");
 
             File file = fileChooser.showSaveDialog(primaryStage);
             if (file != null) {
@@ -90,7 +82,7 @@ public class MainFrame extends Application {
             }
         });
 
-        itemDefaire.setOnAction(e -> Invoker.getInstance().undo()); // Fait appel au Singleton pour defaire la derniere action
+        itemDefaire.setOnAction(e -> Invoker.getInstance().undo());
 
         itemLoader.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
@@ -122,16 +114,13 @@ public class MainFrame extends Application {
             }
         });
 
-        // --- 7. ASSEMBLAGE DE L'INTERFACE (LAYOUT) ---
         BorderPane root = new BorderPane();
         root.setTop(menuBar);
         root.setLeft(thumbnailView);
 
-        // On met les deux perspectives au centre, cote a cote
         HBox centreBox = new HBox(10, vuePerspective1, vuePerspective2);
         root.setCenter(centreBox);
 
-        // --- 8. AFFICHAGE DE LA FENETRE ---
         Scene scene = new Scene(root, 1000, 600);
         scene.setOnKeyPressed(e -> {
             if (e.isControlDown() && e.getCode() == KeyCode.Z) {
